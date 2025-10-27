@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ArtFlow Pro - 150+ Brushes PWA</title>
+    
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        html, body { 
+            height: 100%; 
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+            color: #fff; 
+            overflow: hidden; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-user-select: none; 
+            user-select: none;
+            touch-action: none;
+        }
+        
+        #header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-weight: 700;
+            font-size: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 12px;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            bottom: 120px;
+            background: #fff;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+        
+        #bottom-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            padding: 12px 16px;
+            gap: 12px;
+        }
+        
+        .brush-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 12px;
+            flex: 1;
+        }
+        
+        .tools-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .main-tools {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .utility-tools {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        
+        .btn:hover { 
+            background: rgba(255,255,255,0.15); 
+        }
+        
+        .btn:active { 
+            transform: scale(0.95); 
+        }
+        
+        .btn.active { 
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4); 
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.2);
+            outline: none;
+            -webkit-appearance: none;
+            min-width: 80px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4ecdc4;
+            cursor: pointer;
+        }
+        
+        #brushes-panel {
+            position: fixed;
+            left: -320px;
+            top: 60px;
+            bottom: 120px;
+            width: 320px;
+            background: rgba(20, 20, 20, 0.98);
+            backdrop-filter: blur(30px);
+            border-right: 1px solid #333;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            padding: 16px;
+            z-index: 90;
+        }
+        
+        #brushes-panel.open {
+            left: 0;
+        }
+        
+        #color-picker {
+            position: fixed;
+            right: -280px;
+            top: 60px;
+            bottom: 120px;
+            width: 280px;
+            background: rgba(20, 20, 20, 0.98);
+            backdrop-filter: blur(30px);
+            border-left: 1px solid #333;
+            transition: right 0.3s ease;
+            padding: 16px;
+            z-index: 90;
+        }
+        
+        #color-picker.open {
+            right: 0;
+        }
+        
+        .brushes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .brush-thumb {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 8px;
+        }
+        
+        .brush-thumb:hover { 
+            border-color: #4ecdc4; 
+        }
+        
+        .brush-thumb.active { 
+            border-color: #ff6b6b; 
+            box-shadow: 0 0 0 2px #ff6b6b; 
+        }
+        
+        .brush-preview {
+            width: 80%;
+            height: 80%;
+            border-radius: 4px;
+            background: currentColor;
+            margin-bottom: 4px;
+        }
+        
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        .color-swatch {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .color-swatch:hover { 
+            transform: scale(1.1); 
+        }
+        
+        .color-swatch.active { 
+            border-color: #fff; 
+            box-shadow: 0 0 0 2px #fff; 
+        }
+        
+        .category-title {
+            color: #888;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin: 20px 0 8px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 80;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        .value-display {
+            min-width: 40px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .brush-info {
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .debug-info {
+            position: fixed;
+            top: 70px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .main-tools {
+                gap: 4px;
+            }
+            
+            .btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            .control-group {
+                padding: 6px 8px;
+            }
+            
+            .control-group span {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="logo">ArtFlow Pro</div>
+        <div class="header-controls">
+            <button class="btn" id="btn-undo" title="Отменить">↶</button>
+            <button class="btn" id="btn-redo" title="Повторить">↷</button>
+            <button class="btn" id="btn-clear" title="Очистить холст">🗑️</button>
+        </div>
+    </div>
+
+    <div class="debug-info" id="debug-info"></div>
+
+    <div id="canvas-container">
+        <canvas id="canvas">Ваш браузер не поддерживает Canvas</canvas>
+    </div>
+
+    <div id="bottom-panel">
+        <div class="brush-controls">
+            <div class="control-group">
+                <span>Размер</span>
+                <input type="range" id="brush-size" min="1" max="100" value="20">
+                <span class="value-display" id="brush-size-value">20</span>
+            </div>
+            
+            <div class="control-group">
+                <span>Прозрачность</span>
+                <input type="range" id="brush-opacity" min="0.1" max="1" step="0.1" value="0.8">
+                <span class="value-display" id="brush-opacity-value">80%</span>
+            </div>
+        </div>
+
+        <div class="tools-row">
+            <div class="main-tools">
+                <button class="btn" id="btn-brushes">🖌️ Кисти</button>
+                <button class="btn" id="btn-colors">🎨 Цвета</button>
+                <button class="btn" id="btn-eraser">🧽 Ластик</button>
+                <button class="btn" id="btn-debug">🐛 Дебаг</button>
+            </div>
+            
+            <div class="utility-tools">
+                <button class="btn" id="btn-save">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="brushes-panel">
+        <h3>Библиотека Кистей</h3>
+        <input type="text" class="search-box" id="brush-search" placeholder="Поиск кисти...">
+        <div class="brushes-grid" id="brushes-grid"></div>
+    </div>
+
+    <div id="color-picker">
+        <h3>Цветовая Палитра</h3>
+        <div class="color-grid" id="color-grid"></div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <script>
+        // ==================== БАЗОВЫЕ КИСТИ ====================
+        const Brushes = [
+            { id: 1, name: "Мягкая круглая", category: "Базовые", color: "#5B8FF9", size: 25, opacity: 0.9, scatter: 0, spacing: 0.1, blend: "source-over", stampFunc: "softRound" },
+            { id: 2, name: "Жесткая круглая", category: "Базовые", color: "#E86452", size: 20, opacity: 1, scatter: 0, spacing: 0.05, blend: "source-over", stampFunc: "hardRound" },
+            { id: 3, name: "Тонкий контур", category: "Базовые", color: "#2C3E50", size: 8, opacity: 1, scatter: 0, spacing: 0.03, blend: "source-over", stampFunc: "hardRound" },
+            { id: 4, name: "Акварель мягкая", category: "Акварель", color: "#5B8FF9", size: 35, opacity: 0.7, scatter: 0.1, spacing: 0.15, blend: "multiply", stampFunc: "watercolorSoft" },
+            { id: 5, name: "Графитный карандаш", category: "Карандаш", color: "#2C3E50", size: 8, opacity: 0.95, scatter: 0.02, spacing: 0.03, blend: "source-over", stampFunc: "pencilGraphite" },
+            { id: 6, name: "Угольный карандаш", category: "Карандаш", color: "#1a1a1a", size: 12, opacity: 0.85, scatter: 0.08, spacing: 0.04, blend: "multiply", stampFunc: "pencilCharcoal" }
+        ];
+
+        // ==================== ГЕНЕРАТОРЫ ШТАМПОВ ====================
+        const stampMap = {
+            softRound: (r) => {
+                const size = Math.max(10, r * 2);
+                const c = document.createElement('canvas');
+                c.width = c.height = size;
+                const ctx = c.getContext('2d');
+                const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, r);
+                grad.addColorStop(0, 'rgba(0,0,0,1)');
+                grad.addColorStop(0.7, 'rgba(0,0,0,0.6)');
+                grad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, size, size);
+                return c;
+            },
+
+            hardRound: (r) => {
+                const size = Math.max(10, r * 2);
+                const c = document.createElement('canvas');
+                c.width = c.height = size;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(size/2, size/2, r, 0, Math.PI * 2);
+                ctx.fill();
+                return c;
+            },
+
+            watercolorSoft: (r) => {
+                const c = stampMap.softRound(r);
+                const ctx = c.getContext('2d');
+                ctx.globalCompositeOperation = 'destination-out';
+                for(let i = 0; i < 8; i++) {
+                    const x = Math.random() * c.width;
+                    const y = Math.random() * c.height;
+                    const rad = r * 0.2;
+                    ctx.fillStyle = `rgba(0,0,0,${0.2 + Math.random() * 0.3})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, rad, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                return c;
+            },
+
+            pencilGraphite: (r) => {
+                const size = Math.max(10, r * 2);
+                const c = document.createElement('canvas');
+                c.width = c.height = size;
+                const ctx = c.getContext('2d');
+                const imageData = ctx.createImageData(size, size);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    const x = (i / 4) % size;
+                    const y = Math.floor((i / 4) / size);
+                    const distance = Math.sqrt((x - size/2) ** 2 + (y - size/2) ** 2);
+                    
+                    if (distance < r) {
+                        const alpha = (1 - distance/r) * (0.7 + Math.random() * 0.3);
+                        data[i + 3] = alpha * 255;
+                    }
+                }
+                ctx.putImageData(imageData, 0, 0);
+                return c;
+            },
+
+            pencilCharcoal: (r) => {
+                const c = stampMap.pencilGraphite(r);
+                const ctx = c.getContext('2d');
+                
+                for(let i = 0; i < 15; i++) {
+                    const x = Math.random() * c.width;
+                    const y = Math.random() * c.height;
+                    const grainSize = Math.random() * 3 + 1;
+                    const alpha = Math.random() * 0.8 + 0.2;
+                    
+                    ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+                    ctx.fillRect(x, y, grainSize, grainSize);
+                }
+                return c;
+            }
+        };
+
+        // ==================== ОСНОВНОЙ КЛАСС ПРИЛОЖЕНИЯ ====================
+        class ArtFlowApp {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.currentBrush = null;
+                this.currentColor = '#5B8FF9';
+                this.isDrawing = false;
+                this.lastPoint = null;
+                this.isErasing = false;
+                this.debugMode = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.log('Инициализация приложения...');
+                
+                try {
+                    this.setupEventListeners();
+                    this.initCanvas();
+                    this.populateBrushes();
+                    this.populateColors();
+                    this.selectDefaultBrush();
+                    
+                    this.log('Приложение успешно инициализировано');
+                } catch (error) {
+                    this.log('Ошибка инициализации: ' + error.message, true);
+                }
+            }
+
+            initCanvas() {
+                this.log('Инициализация canvas...');
+                this.resizeCanvas();
+                
+                // Очищаем canvas белым фоном
+                this.ctx.fillStyle = '#FFFFFF';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.log(`Canvas размер: ${this.canvas.width}x${this.canvas.height}`);
+            }
+
+            resizeCanvas() {
+                const container = document.getElementById('canvas-container');
+                const rect = container.getBoundingClientRect();
+                
+                // Сохраняем текущее изображение перед ресайзом
+                const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Устанавливаем новые размеры
+                this.canvas.width = Math.max(1, rect.width);
+                this.canvas.height = Math.max(1, rect.height);
+                
+                // Восстанавливаем изображение
+                this.ctx.putImageData(imageData, 0, 0);
+                
+                this.log(`Canvas ресайз: ${this.canvas.width}x${this.canvas.height}`);
+            }
+
+            setupEventListeners() {
+                this.log('Настройка событий...');
+                
+                // Ресайз окна
+                window.addEventListener('resize', () => {
+                    this.resizeCanvas();
+                });
+
+                // События мыши
+                this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+                this.canvas.addEventListener('mousemove', (e) => this.draw(e));
+                this.canvas.addEventListener('mouseup', () => this.stopDrawing());
+                this.canvas.addEventListener('mouseleave', () => this.stopDrawing());
+
+                // События касания
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (e.touches.length === 1) {
+                        this.startDrawing(e.touches[0]);
+                    }
+                });
+                
+                this.canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (e.touches.length === 1) {
+                        this.draw(e.touches[0]);
+                    }
+                });
+                
+                this.canvas.addEventListener('touchend', () => this.stopDrawing());
+
+                // UI события
+                const setupButton = (id, handler) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.addEventListener('click', handler);
+                    } else {
+                        this.log(`Элемент не найден: ${id}`, true);
+                    }
+                };
+
+                setupButton('btn-brushes', () => this.togglePanel('brushes'));
+                setupButton('btn-colors', () => this.togglePanel('colors'));
+                setupButton('btn-eraser', () => this.toggleEraser());
+                setupButton('btn-clear', () => this.clearCanvas());
+                setupButton('btn-save', () => this.saveImage());
+                setupButton('btn-debug', () => this.toggleDebug());
+                setupButton('btn-undo', () => this.log('Undo - в разработке'));
+                setupButton('btn-redo', () => this.log('Redo - в разработке'));
+
+                document.getElementById('overlay').addEventListener('click', () => this.closePanels());
+                
+                document.getElementById('brush-size').addEventListener('input', (e) => {
+                    if (this.currentBrush) {
+                        this.currentBrush.size = parseInt(e.target.value);
+                        document.getElementById('brush-size-value').textContent = this.currentBrush.size;
+                    }
+                });
+                
+                document.getElementById('brush-opacity').addEventListener('input', (e) => {
+                    if (this.currentBrush) {
+                        this.currentBrush.opacity = parseFloat(e.target.value);
+                        document.getElementById('brush-opacity-value').textContent = Math.round(this.currentBrush.opacity * 100) + '%';
+                    }
+                });
+
+                document.getElementById('brush-search').addEventListener('input', (e) => this.searchBrushes(e.target.value));
+            }
+
+            getPointerPos(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const scaleX = this.canvas.width / rect.width;
+                const scaleY = this.canvas.height / rect.height;
+                
+                const x = (e.clientX - rect.left) * scaleX;
+                const y = (e.clientY - rect.top) * scaleY;
+                
+                return { x: Math.round(x), y: Math.round(y) };
+            }
+
+            startDrawing(e) {
+                this.isDrawing = true;
+                this.lastPoint = this.getPointerPos(e);
+                
+                if (this.debugMode) {
+                    this.log(`Начало рисования: ${this.lastPoint.x},${this.lastPoint.y}`);
+                }
+                
+                // Рисуем первую точку
+                this.drawPoint(this.lastPoint);
+            }
+
+            draw(e) {
+                if (!this.isDrawing || !this.currentBrush) return;
+                
+                const currentPoint = this.getPointerPos(e);
+                
+                if (this.debugMode) {
+                    this.log(`Рисование: ${currentPoint.x},${currentPoint.y}`);
+                }
+
+                if (this.isErasing) {
+                    this.erase(this.lastPoint, currentPoint);
+                } else {
+                    this.paint(this.lastPoint, currentPoint);
+                }
+                
+                this.lastPoint = currentPoint;
+            }
+
+            stopDrawing() {
+                this.isDrawing = false;
+                this.lastPoint = null;
+                
+                if (this.debugMode) {
+                    this.log('Остановка рисования');
+                }
+            }
+
+            drawPoint(point) {
+                if (!this.currentBrush) return;
+                
+                const ctx = this.ctx;
+                const brush = this.currentBrush;
+                
+                ctx.save();
+                ctx.globalAlpha = brush.opacity;
+                ctx.globalCompositeOperation = this.isErasing ? 'destination-out' : brush.blend;
+                
+                if (this.isErasing) {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, brush.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = this.currentColor;
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, brush.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+
+            paint(start, end) {
+                if (!this.currentBrush) return;
+                
+                const ctx = this.ctx;
+                const brush = this.currentBrush;
+                
+                ctx.save();
+                ctx.strokeStyle = this.currentColor;
+                ctx.lineWidth = brush.size;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.globalAlpha = brush.opacity;
+                ctx.globalCompositeOperation = brush.blend;
+                
+                ctx.beginPath();
+                ctx.moveTo(start.x, start.y);
+                ctx.lineTo(end.x, end.y);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+
+            erase(start, end) {
+                const ctx = this.ctx;
+                const size = this.currentBrush ? this.currentBrush.size * 1.2 : 20;
+                
+                ctx.save();
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = size;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.globalAlpha = 1;
+                ctx.globalCompositeOperation = 'destination-out';
+                
+                ctx.beginPath();
+                ctx.moveTo(start.x, start.y);
+                ctx.lineTo(end.x, end.y);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+
+            searchBrushes(query) {
+                const grid = document.getElementById('brushes-grid');
+                const brushes = grid.querySelectorAll('.brush-thumb');
+                const searchTerm = query.toLowerCase().trim();
+                
+                brushes.forEach(thumb => {
+                    const brushName = thumb.getAttribute('data-name').toLowerCase();
+                    if (brushName.includes(searchTerm) || searchTerm === '') {
+                        thumb.style.display = 'flex';
+                    } else {
+                        thumb.style.display = 'none';
+                    }
+                });
+            }
+
+            populateBrushes() {
+                this.log('Загрузка кистей...');
+                
+                const grid = document.getElementById('brushes-grid');
+                if (!grid) {
+                    this.log('Ошибка: brushes-grid не найден', true);
+                    return;
+                }
+                
+                grid.innerHTML = '';
+                
+                const categories = {};
+                Brushes.forEach(brush => {
+                    if (!categories[brush.category]) {
+                        categories[brush.category] = [];
+                    }
+                    categories[brush.category].push(brush);
+                });
+                
+                Object.keys(categories).forEach(category => {
+                    const title = document.createElement('div');
+                    title.className = 'category-title';
+                    title.textContent = `${category} (${categories[category].length})`;
+                    grid.appendChild(title);
+                    
+                    categories[category].forEach((brush) => {
+                        const thumb = document.createElement('div');
+                        thumb.className = 'brush-thumb';
+                        thumb.setAttribute('data-name', brush.name);
+                        thumb.setAttribute('data-id', brush.id);
+                        thumb.innerHTML = `
+                            <div class="brush-preview" style="color: ${brush.color}; opacity: ${brush.opacity}"></div>
+                            <div class="brush-info">${brush.name}<br>${brush.size}px</div>
+                        `;
+                        
+                        thumb.addEventListener('click', () => {
+                            this.selectBrush(brush);
+                        });
+                        
+                        grid.appendChild(thumb);
+                    });
+                });
+                
+                this.log(`Загружено кистей: ${Brushes.length}`);
+            }
+
+            selectDefaultBrush() {
+                if (Brushes.length > 0) {
+                    this.selectBrush(Brushes[0]);
+                }
+            }
+
+            selectBrush(brush) {
+                this.log(`Выбор кисти: ${brush.name}`);
+                
+                this.currentBrush = {...brush};
+                this.currentColor = brush.color;
+                
+                // Обновляем UI
+                document.getElementById('brush-size').value = brush.size;
+                document.getElementById('brush-opacity').value = brush.opacity;
+                document.getElementById('brush-size-value').textContent = brush.size;
+                document.getElementById('brush-opacity-value').textContent = Math.round(brush.opacity * 100) + '%';
+                
+                // Обновляем активные состояния
+                document.querySelectorAll('.brush-thumb').forEach(thumb => {
+                    thumb.classList.remove('active');
+                });
+                
+                const activeThumb = document.querySelector(`.brush-thumb[data-id="${brush.id}"]`);
+                if (activeThumb) {
+                    activeThumb.classList.add('active');
+                }
+                
+                // Обновляем цвет в палитре
+                document.querySelectorAll('.color-swatch').forEach(swatch => {
+                    swatch.classList.remove('active');
+                    if (swatch.style.backgroundColor === brush.color) {
+                        swatch.classList.add('active');
+                    }
+                });
+                
+                this.closePanels();
+            }
+
+            populateColors() {
+                const grid = document.getElementById('color-grid');
+                if (!grid) {
+                    this.log('Ошибка: color-grid не найден', true);
+                    return;
+                }
+                
+                const colors = [
+                    '#5B8FF9', '#5AD8A6', '#F6BD16', '#E86452', '#945FB9',
+                    '#1E9E9E', '#FF9845', '#A32020', '#87D068', '#2C3E50',
+                    '#8D4BBB', '#F4E925', '#BFBFBF', '#E50580', '#FFFFFF',
+                    '#000000', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'
+                ];
+                
+                grid.innerHTML = '';
+                
+                colors.forEach(color => {
+                    const swatch = document.createElement('div');
+                    swatch.className = 'color-swatch';
+                    swatch.style.backgroundColor = color;
+                    
+                    swatch.addEventListener('click', () => {
+                        this.selectColor(color);
+                    });
+                    
+                    grid.appendChild(swatch);
+                });
+                
+                this.log(`Загружено цветов: ${colors.length}`);
+            }
+
+            selectColor(color) {
+                this.log(`Выбор цвета: ${color}`);
+                this.currentColor = color;
+                
+                document.querySelectorAll('.color-swatch').forEach(swatch => {
+                    swatch.classList.remove('active');
+                });
+                
+                const activeSwatch = [...document.querySelectorAll('.color-swatch')]
+                    .find(swatch => swatch.style.backgroundColor === color);
+                
+                if (activeSwatch) {
+                    activeSwatch.classList.add('active');
+                }
+                
+                this.closePanels();
+            }
+
+            toggleEraser() {
+                this.isErasing = !this.isErasing;
+                const btn = document.getElementById('btn-eraser');
+                btn.classList.toggle('active', this.isErasing);
+                
+                this.log(`Ластик: ${this.isErasing ? 'включен' : 'выключен'}`);
+            }
+
+            toggleDebug() {
+                this.debugMode = !this.debugMode;
+                const debugInfo = document.getElementById('debug-info');
+                debugInfo.style.display = this.debugMode ? 'block' : 'none';
+                
+                this.log(`Режим дебага: ${this.debugMode ? 'включен' : 'выключен'}`);
+            }
+
+            togglePanel(panelName) {
+                const brushesPanel = document.getElementById('brushes-panel');
+                const colorsPanel = document.getElementById('color-picker');
+                const overlay = document.getElementById('overlay');
+                
+                if (panelName === 'brushes') {
+                    brushesPanel.classList.toggle('open');
+                    colorsPanel.classList.remove('open');
+                } else if (panelName === 'colors') {
+                    colorsPanel.classList.toggle('open');
+                    brushesPanel.classList.remove('open');
+                }
+                
+                overlay.classList.toggle('active', brushesPanel.classList.contains('open') || colorsPanel.classList.contains('open'));
+            }
+
+            closePanels() {
+                document.getElementById('brushes-panel').classList.remove('open');
+                document.getElementById('color-picker').classList.remove('open');
+                document.getElementById('overlay').classList.remove('active');
+            }
+
+            clearCanvas() {
+                if (confirm('Очистить холст?')) {
+                    this.ctx.fillStyle = '#FFFFFF';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.log('Холст очищен');
+                }
+            }
+
+            saveImage() {
+                try {
+                    this.canvas.toBlob((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `artflow-${Date.now()}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    });
+                    
+                    this.log('Изображение сохранено');
+                } catch (error) {
+                    this.log('Ошибка сохранения: ' + error.message, true);
+                    alert('Ошибка при сохранении изображения');
+                }
+            }
+
+            log(message, isError = false) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logMessage = `[${timestamp}] ${message}`;
+                
+                console[isError ? 'error' : 'log'](logMessage);
+                
+                if (this.debugMode) {
+                    const debugInfo = document.getElementById('debug-info');
+                    debugInfo.innerHTML = logMessage + '<br>' + debugInfo.innerHTML;
+                    
+                    if (isError) {
+                        debugInfo.style.color = '#ff6b6b';
+                    } else {
+                        debugInfo.style.color = '#4ecdc4';
+                    }
+                }
+            }
+        }
+
+        // Запуск приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                new ArtFlowApp();
+            } catch (error) {
+                console.error('Критическая ошибка инициализации:', error);
+                alert('Ошибка загрузки приложения: ' + error.message);
+            }
+        });
+
+        // Обработка глобальных ошибок
+        window.addEventListener('error', (event) => {
+            console.error('Глобальная ошибка:', event.error);
+        });
+    </script>
+</body>
+</html>
